@@ -66,6 +66,15 @@ if rc != 0:
 gpu = out.splitlines()[0].split(",")[0].strip().replace("Tesla ", "")
 print(f"{gpu}, {os.cpu_count()} CPUs", flush=True)
 
+# The stream's public address: a Cloudflare quick tunnel, started now so that
+# registering it (10-40 s) overlaps the install. HTTP/2 over TCP, never QUIC:
+# Colab throttles UDP so hard that QUIC carried 20 KB/s where HTTP/2 carried
+# 12 MB/s from the same VM (measured for RobloxCloud).
+TUNNEL_CMD = f"cloudflared tunnel --no-autoupdate --protocol http2 --url http://127.0.0.1:{PORT}"
+if sh("curl -fsSL -o /usr/local/bin/cloudflared https://github.com/cloudflare/cloudflared/releases/latest/download/"
+      "cloudflared-linux-amd64 && chmod 755 /usr/local/bin/cloudflared", 120)[0] == 0:
+    bg(TUNNEL_CMD, f"{LOGS}/cloudflared.log")
+
 # ------------------------------------------- install + Studio, side by side
 status("install", "Installing the Windows layer and graphics drivers")
 fetched = {}
@@ -131,7 +140,7 @@ json.dump({
     "bitrate": int(cfg.get("bitrate", 8000)), "display": DISPLAY, "state_file": "/tmp/rsc/state.json",
     "launcher": f"{RSC}/launch_studio.sh", "audio_source": audio_source, "gpu": gpu,
 }, open(f"{RSC}/streamer.json", "w"))
-sh("pkill -f '[/]content/rsc/streamer.py'; pkill -x cloudflared; true")
+sh("pkill -f '[/]content/rsc/streamer.py'; true")
 bg(f"PULSE_RUNTIME_PATH=/tmp/pulse PULSE_SERVER=unix:/tmp/pulse/native DISPLAY={DISPLAY} "
    f"{sys.executable} -u {RSC}/streamer.py {RSC}/streamer.json", f"{LOGS}/streamer.log")
 for _ in range(60):
@@ -143,19 +152,23 @@ for _ in range(60):
 else:
     fail("The stream did not start: " + tail(f"{LOGS}/streamer.log"))
 
-# HTTP/2 over TCP, never QUIC: Colab throttles UDP so hard that QUIC carried
-# 20 KB/s where HTTP/2 carried 12 MB/s from the same VM (measured for RobloxCloud).
-url = None
-for attempt in range(3):
-    bg(f"cloudflared tunnel --no-autoupdate --protocol http2 --url http://127.0.0.1:{PORT}", f"{LOGS}/cloudflared.log")
-    end = time.time() + 45
-    while time.time() < end and not url:
+
+def tunnel_url(wait):
+    end = time.time() + wait
+    while True:
         m = re.search(r"https://[a-z0-9-]+\.trycloudflare\.com", tail(f"{LOGS}/cloudflared.log", 100000))
-        url = m.group(0) if m else None
+        if m or time.time() > end:
+            return m.group(0) if m else None
         time.sleep(1)
+
+
+url = tunnel_url(30) if sh("pgrep -x cloudflared")[0] == 0 else None
+for attempt in range(3):
     if url:
         break
     sh("pkill -x cloudflared")
+    bg(TUNNEL_CMD, f"{LOGS}/cloudflared.log")
+    url = tunnel_url(45)
 if not url:
     fail("Could not open a connection to the internet: " + tail(f"{LOGS}/cloudflared.log", 300))
 

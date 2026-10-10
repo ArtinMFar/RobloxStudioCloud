@@ -27,9 +27,11 @@ ldconfig 2>/dev/null || true
 # 2) Downloads that do not need apt, in the background while apt works.
 (
   curl -fsSL -o $DL/chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
-  curl -fsSL -o /usr/local/bin/cloudflared \
-    https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
-  chmod 755 /usr/local/bin/cloudflared
+  if [ ! -x /usr/local/bin/cloudflared ]; then  # setup.py fetches it first, for an early tunnel
+    curl -fsSL -o /usr/local/bin/cloudflared \
+      https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
+    chmod 755 /usr/local/bin/cloudflared
+  fi
   DXVK_URL=$(curl -fsSL https://api.github.com/repos/doitsujin/dxvk/releases/latest \
     | python3 -c 'import sys,json; print([a["browser_download_url"] for a in json.load(sys.stdin)["assets"] if a["name"].endswith(".tar.gz") and "native" not in a["name"]][0])')
   mkdir -p /opt/dxvk && curl -fsSL "$DXVK_URL" | tar -xz -C /opt/dxvk --strip-components=1

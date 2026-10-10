@@ -318,6 +318,8 @@ class Encoder:
 
     def publish(self, data, key):
         for q in list(self.viewers):
+            if self.kind != "h264" and q.qsize() > 256:
+                continue  # a viewer that cannot keep up skips data; JSMpeg finds its way back
             q.put_nowait((data, key))
 
     async def run(self):

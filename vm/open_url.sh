@@ -7,7 +7,10 @@
 . /content/rsc/display.env
 export DISPLAY
 URL="$1"
-echo "$(date +%T) $URL" | cut -c1-120 >> /content/logs/open_url.log
+case "$URL" in  # (a sign-in's code is not logged)
+  http*) echo "$(date +%T) $URL" >> /content/logs/open_url.log ;;
+  *) echo "$(date +%T) ${URL%%\?*}" >> /content/logs/open_url.log ;;
+esac
 
 case "$URL" in
   roblox-studio-auth:*|roblox-studio:*)

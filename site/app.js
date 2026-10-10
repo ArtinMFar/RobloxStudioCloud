@@ -304,8 +304,13 @@
         token_usage: "remote",
         access_type: "offline",
       });
-    const w = window.open(url, "_blank", "noopener");
-    if (!w) location.href = url; // pop-ups blocked: go there in this tab (the steps are remembered)
+    // (A "noopener" window.open always returns null, so drop the opener by hand.)
+    const w = window.open(url, "_blank");
+    if (w) {
+      try {
+        w.opener = null;
+      } catch {}
+    } else location.href = url; // pop-ups blocked: go there in this tab (the steps are remembered)
     renderHome();
     setMsg($("#codeMsg"), "Google's page opened in a new tab. Copy the code it shows and paste it here.");
     $("#codeInput").focus();
