@@ -202,7 +202,7 @@
         // Ctrl/Cmd+V: let the browser fire "paste" with the device's clipboard.
         if ((e.ctrlKey || e.metaKey) && e.code === "KeyV") return;
         e.preventDefault();
-        if (this.mode === "pc" || e.code) this.key(e.code, true);
+        this.key(e.code, true); // a phone or tablet with a keyboard works in Mobile mode too
       });
       addEventListener("keyup", (e) => {
         if (this.stageHidden() || ours(e)) return;

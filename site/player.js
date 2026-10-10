@@ -327,5 +327,4 @@
   }
 
   window.StreamPlayer = StreamPlayer;
-  window.__h264 = { nalUnits, toAvcc, avcDescription, codecOf }; // for tests
 })();

@@ -41,8 +41,8 @@ their own Google account, and their sign-in stays in their own browser.
 3. **Pick a GPU.** L4 needs Colab Pro or pay-as-you-go compute units; if the
    account cannot get one, T4 is picked automatically, at sign-in (from
    Colab's own list) or when Colab refuses the L4.
-4. **Pick the controls**, then **Launch Studio** (about 6 minutes on a fresh
-   machine).
+4. **Pick the controls**, then **Launch Studio** (about 4 minutes: half a
+   minute for the GitHub Action and the GPU, then installing and starting Studio).
 5. **Sign in to Roblox** inside Studio: the *Use another device* code is the
    quickest (enter it in the Roblox app or at roblox.com on a device where you
    are signed in). *Sign in* opens Roblox's login page inside the cloud screen.
@@ -129,12 +129,12 @@ machine (`colab stop`), also when the run is cancelled.
 
 - Colab's free tier does not allow remote desktops or using the machine
   mainly through another web UI; a paid plan does not have that rule. GPU time
-  uses the Google account's Colab compute units (a T4 is about 1.1 units an
-  hour, an L4 about 4.8).
+  uses the Google account's Colab compute units (a T4 measured 1.07 units an
+  hour; an L4 costs several times that).
 - The machine is new every session: Studio is installed again and you sign in
   to Roblox again. Save your places to Roblox (*File → Save to Roblox*).
-- Colab picks the machine's region, so latency varies (one test machine was in
-  Singapore, about 260 ms from here; another in the US).
+- Colab picks the machine's region, so latency varies (test machines landed in
+  the US, Europe and Singapore).
 
 ## Files
 
