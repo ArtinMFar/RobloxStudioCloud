@@ -19,6 +19,8 @@ case "$URL" in
     pkill -f '[c]hrome.*rsc-chrome' || true
     ;;
   *)
+    # Chrome is installed in the background after the start; wait for it if needed.
+    for _ in $(seq 120); do command -v google-chrome >/dev/null && break; sleep 1; done
     W=$(( WIDTH * 85 / 100 )); H=$(( HEIGHT * 90 / 100 ))
     # --app: a plain window without tabs or address bar; --test-type: no warning bar about --no-sandbox.
     nohup google-chrome --no-sandbox --test-type --user-data-dir=/tmp/rsc-chrome --no-first-run \

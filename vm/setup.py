@@ -170,5 +170,6 @@ while True:
             fail(f"The stream's address did not answer: {e}")
         time.sleep(2)
 
+bg(f"bash {RSC}/install_browser.sh", f"{LOGS}/browser.log")  # for Studio's browser sign-in
 print(f"ready in {int(time.time() - t0)} s", flush=True)
 print("@@READY " + json.dumps({"url": url, "gpu": gpu, "cpus": os.cpu_count()}), flush=True)

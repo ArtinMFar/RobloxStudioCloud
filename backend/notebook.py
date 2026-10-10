@@ -12,10 +12,12 @@ Usage: notebook.py <out.ipynb> '<settings json>'   (or import build())
 import json
 import pathlib
 import sys
+import uuid
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 VM = ROOT / "vm"
-FILES = ["install.sh", "fetch_studio.py", "launch_studio.sh", "open_url.sh", "streamer.py", "setup.py"]
+FILES = ["install.sh", "install_browser.sh", "fetch_studio.py", "launch_studio.sh", "open_url.sh", "streamer.py",
+         "setup.py"]
 
 # Prints the setup's log lines as "~<n> <line>" (n counts from 1) from line SKIP+1
 # on, until it is ready, fails or stops.
@@ -47,11 +49,12 @@ while not done and time.time() < deadline:
 
 
 def md(text):
-    return {"cell_type": "markdown", "metadata": {}, "source": text.strip("\n").splitlines(True)}
+    return {"cell_type": "markdown", "id": uuid.uuid4().hex[:8], "metadata": {},
+            "source": text.strip("\n").splitlines(True)}
 
 
 def code(text):
-    return {"cell_type": "code", "metadata": {}, "execution_count": None, "outputs": [],
+    return {"cell_type": "code", "id": uuid.uuid4().hex[:8], "metadata": {}, "execution_count": None, "outputs": [],
             "source": text.strip("\n").splitlines(True)}
 
 

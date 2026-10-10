@@ -3,8 +3,10 @@
 #   - registers the NVIDIA Vulkan/EGL drivers Colab ships in /usr/lib64-nvidia
 #     but never registers (so DXVK renders on the GPU, not the CPU)
 #   - Wine-staging (WineHQ) + DXVK (Direct3D 11 -> Vulkan)
-#   - Xvfb, PulseAudio, xdotool, Google Chrome (Studio signs in through a browser)
+#   - Xvfb, PulseAudio, xdotool, xclip
 #   - cloudflared and the streamer's Python packages
+# Google Chrome (only for Studio's browser sign-in) is downloaded here and
+# installed later, in the background, by install_browser.sh.
 # Usage: install.sh   (prints INSTALL_DONE at the end)
 set -euxo pipefail
 export DEBIAN_FRONTEND=noninteractive
@@ -48,13 +50,13 @@ apt-get update -qq || true
 wait $DOWNLOADS
 test -f $DL/downloads.ok || { cat $DL/downloads.log; exit 1; }
 apt-get install -y -qq --install-recommends winehq-staging
-apt-get install -y -qq $DL/chrome.deb xvfb x11-utils x11-xserver-utils xdotool xclip imagemagick \
+apt-get install -y -qq xvfb x11-utils x11-xserver-utils xdotool xclip imagemagick \
   pulseaudio pulseaudio-utils cabextract winbind unzip fonts-liberation fonts-dejavu-core
 wait $PIP || python3 -m pip install -q aiohttp python-xlib
 wine --version
 ls /opt/dxvk/x64
 
-# 4) Links Studio opens go to Chrome on this display. Studio signs in with OAuth:
+# 4) Links Studio opens go to Chrome on this display (vm/open_url.sh). Studio signs in with OAuth:
 #    the browser ends on roblox-studio-auth:/?code=..., which goes back to Studio.
 mkdir -p /etc/opt/chrome/policies/managed /usr/share/applications
 cat > /etc/opt/chrome/policies/managed/rsc.json <<'J'
