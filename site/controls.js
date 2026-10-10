@@ -19,7 +19,9 @@
  *  - Dragging anywhere else turns the camera (a right-drag in Studio), or, in
  *    Cursor mode, drags with the left button (moving parts, sliders, panels).
  *  - Tap: click. Long press, or the right-click button then a tap: right-click.
- *  - Two fingers: pinch to zoom, slide to scroll. */
+ *  - Two fingers: pinch to zoom, slide to scroll.
+ *  - On a web page Studio opened (sign-in, sign-up), dragging scrolls it like a
+ *    phone page and the thumbstick is put away. */
 "use strict";
 (() => {
   const STICK_RADIUS = 56; // CSS px the knob can travel
@@ -27,6 +29,7 @@
   const TAP_MOVE = 10; // CSS px a tap may wander
   const LONG_PRESS = 550; // ms
   const TURN_SPEED = 1.0; // stream px per CSS px of finger travel
+  const SCROLL_STEP = 45; // stream px of finger travel per wheel step on a web page
 
   class Controls {
     constructor({ screen, touchUi, stickZone, stick, knob, send, getCanvas, onActivity }) {
@@ -49,6 +52,7 @@
       this.touches = new Map();
       this.stickState = null;
       this.stickKeys = new Set();
+      this.popups = []; // browser windows on screen, [x, y, w, h] from 0 to 1 (vm/streamer.py)
       this.bindPc();
       this.bindTouch();
     }
@@ -66,7 +70,20 @@
 
     setStick(on) {
       this.stickOn = on;
-      this.stickZone.hidden = !on;
+      this.stickZone.hidden = !on || this.popups.length > 0;
+    }
+
+    setPopups(rects) {
+      this.popups = Array.isArray(rects) ? rects : [];
+      if (this.popups.length && this.stickState) this.endStick(null, true);
+      this.setStick(this.stickOn);
+      // E/Q fly the camera: no use while a page is open, and they would cover it.
+      document.querySelector(".touch-buttons").hidden = this.popups.length > 0;
+    }
+
+    onPopup(clientX, clientY) {
+      const p = this.norm(clientX, clientY);
+      return this.popups.some(([x, y, w, h]) => p.x >= x && p.x <= x + w && p.y >= y && p.y <= y + h);
     }
 
     // ------------------------------------------------------------ helpers
@@ -332,7 +349,8 @@
         try {
           el.setPointerCapture(e.pointerId);
         } catch {}
-        const t = { id: e.pointerId, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, t0: performance.now(), state: "pending" };
+        const t = { id: e.pointerId, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY, t0: performance.now(), state: "pending",
+          page: this.onPopup(e.clientX, e.clientY), scrolled: 0 };
         this.touches.set(e.pointerId, t);
         if (this.touches.size === 2) {
           // A second finger: whatever the first was doing becomes a pinch/scroll.
@@ -368,7 +386,13 @@
         if (t.state === "pending" && Math.hypot(t.x - t.x0, t.y - t.y0) > TAP_MOVE) {
           clearTimeout(t.timer);
           const start = this.norm(t.x0, t.y0);
-          if (this.touchMode === "camera") {
+          if (t.page) {
+            // A web page: scroll it, like a page on the phone.
+            t.state = "scroll";
+            this.pending.mm = start;
+            this.flush();
+            this.scrollBy(t, t.y - t.y0);
+          } else if (this.touchMode === "camera") {
             t.state = "turn";
             this.send({ t: "mb", b: 2, d: 1, x: r4(start.x), y: r4(start.y) });
             this.pending.dx += (t.x - t.x0) * TURN_SPEED * this.scale();
@@ -382,7 +406,9 @@
           }
           return;
         }
-        if (t.state === "turn") {
+        if (t.state === "scroll") {
+          this.scrollBy(t, ddy);
+        } else if (t.state === "turn") {
           this.pending.dx += ddx * TURN_SPEED * this.scale();
           this.pending.dy += ddy * TURN_SPEED * this.scale();
           this.queue();
@@ -404,6 +430,16 @@
       };
       el.addEventListener("pointerup", (e) => end(e, false));
       el.addEventListener("pointercancel", (e) => end(e, true));
+    }
+
+    scrollBy(t, dy) {
+      // Finger up = the page moves up = scroll down (wheel down).
+      t.scrolled += dy * this.scale();
+      while (Math.abs(t.scrolled) >= SCROLL_STEP) {
+        const down = t.scrolled < 0;
+        t.scrolled += down ? SCROLL_STEP : -SCROLL_STEP;
+        this.send({ t: "wh", dx: 0, dy: down ? 100 : -100 });
+      }
     }
 
     endStick(e, cancelled) {

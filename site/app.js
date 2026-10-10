@@ -690,6 +690,7 @@
       } catch {}
     }
     controls.letGo();
+    controls.setPopups([]);
     if (document.pointerLockElement) document.exitPointerLock();
     if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
     if (wakeLock) wakeLock.release().catch(() => {});
@@ -782,6 +783,7 @@
       }
       if (m.t === "state") onServerState(m);
       else if (m.t === "cursor") setCursor(m);
+      else if (m.t === "popups") controls.setPopups(m.rects);
       else if (m.t === "pong" && typeof m.ts === "number") lastRtt = Math.round(performance.now() - m.ts);
       else if (m.t === "clip" && m.s && navigator.clipboard) navigator.clipboard.writeText(m.s).catch(() => {});
       else if (m.t === "stopped") endSession("Session ended.", false);

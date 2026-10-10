@@ -98,6 +98,8 @@ class Screen:
             self.cursor_d.xfixes_query_version()
         self.cursor_serial = None
         self.maximise_tries = {}  # Studio window id -> (tries, last try)
+        self.placed = set()  # browser windows already centred
+        self.popups = []  # browser windows on screen, as [x, y, w, h] from 0 to 1
 
     def sync(self):
         self.d.sync()
@@ -222,6 +224,43 @@ class Screen:
                     time.sleep(0.08)
                 xtest.fake_input(self.d, X.MotionNotify, x=p.root_x, y=p.root_y)
                 self.sync()
+
+    def place_popups(self):
+        """Centre every browser window (Studio's sign-in / sign-up pages) on the
+        screen, fully inside it, once per window, and list where they are.
+
+        Nothing manages windows outside Wine's desktop, so a browser window keeps
+        whatever size it asked for. Chrome asks in scaled units, so at a 125 %
+        interface size it came out bigger than the screen, with the bottom of the
+        page (the Sign Up button) out of reach. Returns True if the list changed."""
+        found = []
+        for win in self.root.query_tree().children:
+            try:
+                cls = win.get_wm_class() or ()
+                if not any("chrome" in c.lower() for c in cls):
+                    continue
+                if win.get_attributes().map_state != X.IsViewable:
+                    continue
+                g = win.get_geometry()
+            except xerror.XError:
+                continue
+            if g.width < 200 or g.height < 150:
+                continue  # menus, tooltips, autofill pop-ups
+            if win.id not in self.placed:
+                self.placed.add(win.id)
+                w, h = self.w * 94 // 100, self.h * 94 // 100
+                x, y = (self.w - w) // 2, (self.h - h) // 2
+                if (g.x, g.y, g.width, g.height) != (x, y, w, h):
+                    log(f"placing browser window 0x{win.id:x} ({g.width}x{g.height}+{g.x}+{g.y} -> {w}x{h}+{x}+{y})")
+                    win.configure(x=x, y=y, width=w, height=h)
+                    win.raise_window()
+                    self.sync()
+                    g = win.get_geometry()
+            found.append([round(g.x / self.w, 4), round(g.y / self.h, 4),
+                          round(g.width / self.w, 4), round(g.height / self.h, 4)])
+        changed = found != self.popups
+        self.popups = found
+        return changed
 
     def cursor(self):
         """The pointer's image as a message for the page, or None if it has not changed."""
@@ -482,6 +521,7 @@ class Streamer:
         self.last_client = time.time()
         log("controller connected")
         await ws.send_str(json.dumps(self.state()))
+        await ws.send_str(json.dumps({"t": "popups", "rects": self.screen.popups}))
         if self.last_cursor:
             await ws.send_str(json.dumps(self.last_cursor))
         try:
@@ -604,10 +644,12 @@ class Streamer:
         last_scan = 0.0
         while True:
             now = time.monotonic()
-            if now - last_scan > 1.0 and not self.screen.held_buttons:
+            if now - last_scan > 0.5 and not self.screen.held_buttons:
                 last_scan = now
                 try:
                     self.screen.maximise_studio()
+                    if self.screen.place_popups():
+                        await self.broadcast({"t": "popups", "rects": self.screen.popups})
                 except xerror.XError as e:
                     log("X error:", e)
             if self.ctl_clients:

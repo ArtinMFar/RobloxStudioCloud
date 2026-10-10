@@ -24,12 +24,14 @@ case "$URL" in
   *)
     # Chrome is installed in the background after the start; wait for it if needed.
     for _ in $(seq 120); do command -v google-chrome >/dev/null && break; sleep 1; done
-    W=$(( WIDTH * 85 / 100 )); H=$(( HEIGHT * 90 / 100 ))
+    # Chrome takes the window's size and place in scaled units (pixels / scale);
+    # vm/streamer.py also centres the window on the screen once it is up.
+    SCALE=$(python3 -c "print(round(${DPI:-96}/96, 2))")
+    read -r W H X Y < <(python3 -c "s=$SCALE; W,H=$WIDTH/s,$HEIGHT/s; w,h=int(W*.94),int(H*.94); print(w,h,int((W-w)/2),int((H-h)/2))")
     # --app: a plain window without tabs or address bar; --test-type: no warning bar about --no-sandbox.
     nohup google-chrome --no-sandbox --test-type --user-data-dir=/tmp/rsc-chrome --no-first-run \
       --no-default-browser-check --disable-features=Translate,MediaRouter --password-store=basic \
-      --force-device-scale-factor="$(python3 -c "print(round(${DPI:-96}/96, 2))")" \
-      --window-position=$(( (WIDTH - W) / 2 )),$(( (HEIGHT - H) / 2 )) --window-size=$W,$H \
+      --force-device-scale-factor="$SCALE" --window-position="$X,$Y" --window-size="$W,$H" \
       --app="$URL" >> /content/logs/chrome_run.log 2>&1 &
     ;;
 esac
