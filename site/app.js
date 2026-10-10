@@ -265,7 +265,7 @@
     $("#stepGpu").classList.toggle("locked", !google);
     $("#stepMode").classList.toggle("locked", !google);
     renderCards();
-    $("#playBtn").disabled = !(google && ready);
+    $("#playBtn").disabled = !(google && ready) || launching || !!session;
     const [w, h] = streamSize();
     $("#playMeta").textContent = `${settings.gpu} · ${settings.mode === "mobile" ? "Mobile" : "PC"} controls · ${w}×${h} at ${settings.fps} fps`;
   }
@@ -439,11 +439,39 @@
   let session = store.get("rsc.session"); // {sid, key, runId, at, gpu, w, h, runner, stream, ...}
   let launchTick;
   let following = false;
+  let launching = false; // a launch is being started: a second tap must not start another
+
+  // Every session run this browser started, so that ending a session also ends
+  // any that got away (a run whose page was closed, ...): [{id, at}]
+  function rememberRun(id) {
+    const runs = store.get("rsc.runs", []).filter((r) => Date.now() - r.at < 6 * 3600e3 && r.id !== id);
+    runs.push({ id, at: Date.now() });
+    store.set("rsc.runs", runs.slice(-10));
+  }
+  /** Cancel this browser's session runs that are still going, except `keep`.
+   *  Cancelling a run makes its cleanup step release the cloud machine. */
+  async function cancelRuns(keep) {
+    const runs = store.get("rsc.runs", []);
+    const left = [];
+    for (const r of runs) {
+      if (r.id === keep) {
+        left.push(r);
+        continue;
+      }
+      const run = await api(`${repoPath()}/actions/runs/${r.id}`).catch(() => null);
+      if (run && run.status !== "completed") {
+        await api(`${repoPath()}/actions/runs/${r.id}/cancel`, { method: "POST" }).catch(() => {});
+        if (Date.now() - r.at < 6 * 3600e3) left.push(r); // checked again next time
+      }
+    }
+    store.set("rsc.runs", left);
+  }
 
   async function play() {
-    if (session) return;
+    if (session || launching) return;
     const google = store.get("rsc.google");
     if (!google) return;
+    launching = true;
     $("#playBtn").disabled = true;
     setHomeBanner("");
     try {
@@ -460,13 +488,16 @@
         page_key: "",
         options: JSON.stringify({ gpu: settings.gpu, w, h, fps, bitrate, dpi: Number(settings.dpi), minutes: Number(settings.limit) }),
       });
+      rememberRun(runId);
       session = { sid, key, runId, at: Date.now(), gpu: settings.gpu, w, h };
       store.set("rsc.session", session);
       startLaunchView();
       followSession();
+      cancelRuns(runId); // anything older this browser left running
     } catch (err) {
       setHomeBanner(err.message, "error");
     } finally {
+      launching = false;
       renderHome();
     }
   }
@@ -506,50 +537,56 @@
     if (following) return;
     following = true;
     let misses = 0;
+    let current = null;
     try {
       while (session && !session.ended) {
         const s = session;
+        if (s !== current) {
+          current = s;
+          misses = 0;
+        }
         try {
           if (!s.runner) {
-            const h = await findHandoff(s.runId, s.sid, (state, secs) =>
-              setProgress("queued", state === "queued" ? `Waiting for a cloud machine… ${secs}s` : "Reserving a cloud machine…")
-            );
+            const h = await findHandoff(s.runId, s.sid, (state, secs) => {
+              if (session === s)
+                setProgress("queued", state === "queued" ? `Waiting for a cloud machine… ${secs}s` : "Reserving a cloud machine…");
+            });
+            if (session !== s) continue; // ended or replaced meanwhile
             const google = store.get("rsc.google");
             if (!google) throw new Error("Sign in with Google first.");
             const res = await backendCall(h.url, "/hello", { method: "POST", key: s.key, body: seal(JSON.stringify({ key: s.key, token: google.token }), h.key) });
             if (!res.ok) throw new Error(res.error || "The cloud service did not accept the sign-in.");
-            if (session !== s) return;
             s.runner = h.url;
+            if (session !== s) continue;
             store.set("rsc.session", s);
           }
           const p = await backendCall(s.runner, "/progress", { key: s.key });
-          if (session !== s) return;
+          if (session !== s) continue;
           misses = 0;
           onProgress(p);
         } catch (err) {
-          if (session !== s) return;
+          if (session !== s) continue;
           const network = err instanceof TypeError || (err instanceof ApiError && err.status === 0);
           if (!network) {
             endSession(err.message, true);
-            return;
+            continue;
           }
           // Could not reach the backend: retry for a while, then see whether it finished.
           if (++misses >= 6) {
             const run = await api(`${repoPath()}/actions/runs/${s.runId}`).catch(() => null);
+            if (session !== s) continue;
             if (run && run.status === "completed") {
               endSession(s.stream ? "The session ended." : "The cloud service stopped. Try again.", !s.stream);
-              return;
+              continue;
             }
             if (misses >= 40) {
               endSession("Lost the connection to the cloud service.", true);
-              return;
+              continue;
             }
           }
         }
         await sleep(session && session.stream ? 10000 : 1500);
       }
-    } catch (err) {
-      if (session) endSession(err.message, true);
     } finally {
       following = false;
     }
@@ -594,15 +631,15 @@
     const s = session;
     send({ t: "stop" });
     $("#launchMsg").textContent = "Stopping…";
-    let stopped = false;
-    if (s.runner) {
-      const r = await backendCall(s.runner, "/stop", { method: "POST", key: s.key }).catch(() => ({}));
-      stopped = !!r.ok;
-    }
-    if (!stopped && s.runId) {
-      await api(`${repoPath()}/actions/runs/${s.runId}/cancel`, { method: "POST" }).catch(() => {});
-    }
+    $("#launchStop").disabled = true;
+    // The backend releases the machine at once when it hears this...
+    if (s.runner) await backendCall(s.runner, "/stop", { method: "POST", key: s.key }).catch(() => {});
+    // ...and cancelling the run releases it in every case (its cleanup step runs
+    // even then), also while the machine is still being set up.
+    if (s.runId) await api(`${repoPath()}/actions/runs/${s.runId}/cancel`, { method: "POST" }).catch(() => {});
+    $("#launchStop").disabled = false;
     endSession("Session ended. The cloud machine is being released.", false);
+    cancelRuns(null); // and any other session this browser left running
   }
   $("#launchStop").addEventListener("click", stopSession);
   $("#stopBtn").addEventListener("click", () => {
@@ -1027,7 +1064,7 @@
   $("#signOut").addEventListener("click", signOut);
   $("#forget").addEventListener("click", () => {
     if (!confirm("Forget your sign-in and settings on this device?")) return;
-    for (const k of ["rsc.settings", "rsc.access", "rsc.google", "rsc.pkce", "rsc.session", "rsc.l4Unavailable", "rsc.codec"]) store.del(k);
+    for (const k of ["rsc.settings", "rsc.access", "rsc.google", "rsc.pkce", "rsc.session", "rsc.runs", "rsc.l4Unavailable", "rsc.codec"]) store.del(k);
     location.reload();
   });
   $("#settings").addEventListener("close", () => renderHome());

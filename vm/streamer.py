@@ -429,6 +429,7 @@ class Streamer:
         self.screen = Screen(cfg["display"], cfg["width"], cfg["height"])
         self.encoders = {k: Encoder(cfg, k) for k in ("h264", "mpeg1", "audio")}
         self.ctl_clients = set()
+        self.seen = False  # whether a page has connected yet
         self.last_client = time.time()
         self.stopped = False
         self.restarting = False
@@ -459,7 +460,7 @@ class Streamer:
     # ------------------------------------------------------------- handlers
     async def health(self, request):
         return web.json_response(
-            {"ok": True, "stopped": self.stopped, "clients": len(self.ctl_clients),
+            {"ok": True, "stopped": self.stopped, "clients": len(self.ctl_clients), "seen": self.seen,
              "idle": int(time.time() - self.last_client) if not self.ctl_clients else 0},
             headers={"Access-Control-Allow-Origin": "*", "Cache-Control": "no-store"})
 
@@ -518,6 +519,7 @@ class Streamer:
         ws = web.WebSocketResponse(max_msg_size=1 << 16, heartbeat=20)
         await ws.prepare(request)
         self.ctl_clients.add(ws)
+        self.seen = True
         self.last_client = time.time()
         log("controller connected")
         await ws.send_str(json.dumps(self.state()))

@@ -395,6 +395,9 @@ def run_setup(line, settings):
         proc = subprocess.Popen(["colab", "exec", "-s", NAME, "--timeout", "3200", "-f", target],
                                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, stdin=subprocess.DEVNULL,
                                 env={**os.environ, "PYTHONUNBUFFERED": "1"})
+        # Stop from the page while the machine is still being set up: stop following now.
+        threading.Thread(target=lambda p=proc: line.stop_event.wait() and p.poll() is None and p.terminate(),
+                         daemon=True).start()
         for raw in proc.stdout:
             raw = raw.rstrip("\n")
             m = re.match(r"^~(\d+) (.*)$", raw)
@@ -459,6 +462,9 @@ def start():
     STATE.write_text(json.dumps({"name": NAME}))  # from here on, cleanup releases the machine
 
     gpu = provision(line, str(OPTIONS.get("gpu", "L4")).upper())
+    if gpu and line.stop_event.is_set():
+        release(line, "Session ended")
+        return
     if not gpu:
         STATE.unlink(missing_ok=True)
         line.fail(line.progress.get("error") or "No GPU was available", reply=False)
@@ -471,6 +477,9 @@ def start():
     }
     line.set(phase="vm", message="Preparing the machine")
     ready = run_setup(line, settings)
+    if line.stop_event.is_set():
+        release(line, "Session ended")
+        return
     if not ready:
         if STATE.exists():
             colab("stop", "-s", NAME, timeout=300)
@@ -483,6 +492,7 @@ def start():
     started = time.time()
     max_s = min(345, max(15, float(OPTIONS.get("minutes") or 120))) * 60
     idle_s = 10 * 60
+    no_show_s = 5 * 60  # the page never opened the stream (closed, or replaced by another launch)
     misses = 0
     while True:
         if line.stop_event.wait(20):
@@ -498,6 +508,9 @@ def start():
         misses = 0
         if st.get("stopped"):
             release(line, "Session ended")
+            break
+        if st.get("seen") is False and time.time() - started > no_show_s:
+            release(line, "Nobody opened the session, so it ended")
             break
         if st.get("clients", 0) == 0 and st.get("idle", 0) > idle_s:
             release(line, "Nobody was connected for 10 minutes, so the session ended")
