@@ -28,6 +28,11 @@ permissions:
   contents: read
   statuses: write
 
+# One run per session, even if the page asks twice.
+concurrency:
+  group: studio-${{ inputs.session_id }}
+  cancel-in-progress: false
+
 jobs:
   session:
     runs-on: ubuntu-latest

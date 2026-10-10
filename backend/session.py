@@ -242,13 +242,22 @@ class Line:
 
     def wait_hello(self, timeout=300):
         if not self.hello_event.wait(timeout):
-            status("error", "The page did not connect in time. Try again.")
-            sys.exit(1)
+            self.fail("The page did not connect in time. Try again.", reply=False)
         return self.hello
 
     def answer(self, reply):
         self.reply = reply
         self.reply_event.set()
+
+    def fail(self, error, reply=True):
+        """Tell the page what went wrong (as the answer to /hello and in /progress),
+        give it time to read it, and end the run."""
+        if reply and not self.reply_event.is_set():
+            self.answer({"ok": False, "error": error})
+        self.set(phase="error", error=error)
+        status("error", error)
+        time.sleep(15)
+        sys.exit(1)
 
 
 # ---------------------------------------------------------------- login
@@ -294,22 +303,17 @@ def login():
         flow.fetch_token(code=code)
     except Exception as e:
         err = str(e)
-        line.answer({"ok": False, "error": "That code was already used or has expired. Press Sign in with Google again."
-                     if "invalid_grant" in err else "Google did not accept the code. Press Sign in with Google again."})
         log("Google refused the code:", "invalid_grant" if "invalid_grant" in err else type(e).__name__)
-        status("error", "Google did not accept the code")
-        time.sleep(3)
-        sys.exit(1)
+        line.fail("That code was already used or has expired. Press Sign in with Google again."
+                  if "invalid_grant" in err else "Google did not accept the code. Press Sign in with Google again.")
     creds = flow.credentials
     mask(creds.token)
     mask(creds.refresh_token)
     if not creds.refresh_token:
-        line.answer({"ok": False, "error": "Google gave no lasting sign-in. Sign in again and allow every permission."})
-        sys.exit(1)
+        line.fail("Google gave no lasting sign-in. Sign in again and allow every permission.")
     granted = set(flow.oauth2session.token.get("scope") or [])
     if granted and "https://www.googleapis.com/auth/colaboratory" not in granted:
-        line.answer({"ok": False, "error": "The Colab permission was not allowed. Sign in again and allow every permission."})
-        sys.exit(1)
+        line.fail("The Colab permission was not allowed. Sign in again and allow every permission.")
     email = None
     id_token = flow.oauth2session.token.get("id_token")
     if id_token:
@@ -450,17 +454,14 @@ def start():
     line.start()
     msg = line.wait_hello()
     if not write_token(str(msg.get("token", ""))):
-        line.answer({"ok": False, "error": "Sign in with Google first."})
-        sys.exit(1)
+        line.fail("Sign in with Google first.")
     line.answer({"ok": True})
     STATE.write_text(json.dumps({"name": NAME}))  # from here on, cleanup releases the machine
 
     gpu = provision(line, str(OPTIONS.get("gpu", "L4")).upper())
     if not gpu:
         STATE.unlink(missing_ok=True)
-        status("error", "No GPU")
-        time.sleep(20)  # let the page read the reason
-        sys.exit(1)
+        line.fail(line.progress.get("error") or "No GPU was available", reply=False)
     w, h = int(OPTIONS.get("w", 1600)), int(OPTIONS.get("h", 900))
     settings = {
         "key_hash": KEY_HASH, "gpu": gpu, "width": max(1024, min(2560, w)), "height": max(576, min(1440, h)),
@@ -471,11 +472,10 @@ def start():
     line.set(phase="vm", message="Preparing the machine")
     ready = run_setup(line, settings)
     if not ready:
-        release(line, "Setting up failed")
-        line.set(phase="error", done=False)
-        status("error", "Setup failed")
-        time.sleep(20)
-        sys.exit(1)
+        if STATE.exists():
+            colab("stop", "-s", NAME, timeout=300)
+            STATE.unlink(missing_ok=True)
+        line.fail(line.progress.get("error") or "Setting up the machine failed", reply=False)
     line.set(phase="ready", stream=ready["url"], gpu=ready.get("gpu", gpu),
              message=f"Roblox Studio is running on the {ready.get('gpu', gpu)}")
     status("ready", "Running")
