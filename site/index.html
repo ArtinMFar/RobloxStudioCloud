@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0d1117">
+  <meta name="description" content="Roblox Studio on the cloud: build on a cloud GPU from any browser, on a PC or a phone.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Roblox Studio Cloud</title>
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <header class="topbar" id="topbar">
+    <a class="brand" href="./" aria-label="Roblox Studio Cloud home">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M9 25h15a6 6 0 0 0 .9-11.93A8.5 8.5 0 0 0 8.4 14.5 5.25 5.25 0 0 0 9 25Z" fill="var(--accent)"/><rect x="12.2" y="14.6" width="7.6" height="7.6" rx="1" transform="rotate(15 16 18.4)" fill="var(--bg)"/><rect x="14.8" y="17.2" width="2.4" height="2.4" transform="rotate(15 16 18.4)" fill="var(--accent)"/></svg>
+      <span>Roblox Studio <b>Cloud</b></span>
+    </a>
+    <div class="topbar-right">
+      <span id="accountChip" class="chip" hidden></span>
+      <button id="settingsBtn" class="icon-btn" type="button" aria-label="Settings" title="Settings">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1.03-1.56V3a2 2 0 1 1 4 0v.09A1.7 1.7 0 0 0 15 4.6a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 9c.14.6.68 1.03 1.3 1.03H21a2 2 0 1 1 0 4h-.09c-.62 0-1.16.42-1.3 1Z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ===================================================== settings (home) -->
+  <main id="home" class="home">
+    <section class="hero">
+      <h1>Roblox Studio, on the cloud</h1>
+      <p>Build your experiences on a cloud GPU, right in your browser. Works on a PC with a keyboard and mouse, or on a phone with touch controls.</p>
+    </section>
+
+    <div id="banner" class="banner" hidden></div>
+
+    <ol class="steps">
+      <li id="stepGoogle" class="step">
+        <div class="step-head">
+          <span class="num">1</span>
+          <div class="step-title"><h2>Sign in with Google</h2><span class="step-sub" id="googleSub">Your Google account provides the cloud computer.</span></div>
+        </div>
+        <div class="step-body">
+          <p>Google's sign-in page opens in a new tab. Allow every permission, then copy the code Google shows you.</p>
+          <button id="googleBtn" class="btn google" type="button">
+            <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>
+            <span id="googleBtnText">Sign in with Google</span>
+          </button>
+        </div>
+      </li>
+
+      <li id="stepCode" class="step">
+        <div class="step-head">
+          <span class="num">2</span>
+          <div class="step-title"><h2>Paste the authorization code</h2><span class="step-sub" id="codeSub">The code from Google's page, starting with 4/</span></div>
+        </div>
+        <form id="codeForm" class="step-body" autocomplete="off">
+          <label class="field"><span>Authorization code</span>
+            <input id="codeInput" type="text" placeholder="4/0A…" spellcheck="false" autocapitalize="off" autocorrect="off" required>
+          </label>
+          <div class="row"><button class="btn primary" type="submit" id="codeBtn">Continue</button>
+            <span class="msg" id="codeMsg" role="status"></span></div>
+        </form>
+      </li>
+
+      <li id="stepGpu" class="step">
+        <div class="step-head">
+          <span class="num">3</span>
+          <div class="step-title"><h2>Pick a GPU</h2><span class="step-sub" id="gpuSub">Studio's 3D view renders on it.</span></div>
+        </div>
+        <div class="step-body">
+          <div class="cards" role="radiogroup" aria-label="GPU">
+            <button type="button" class="card" data-gpu="L4" role="radio" aria-checked="false">
+              <span class="card-name">NVIDIA L4</span>
+              <span class="card-desc">Fastest. More CPU cores and memory, so Studio opens and plays quicker.</span>
+            </button>
+            <button type="button" class="card" data-gpu="T4" role="radio" aria-checked="false">
+              <span class="card-name">NVIDIA T4</span>
+              <span class="card-desc">Uses less of your compute. Fine for building and scripting.</span>
+            </button>
+          </div>
+          <p class="msg" id="gpuMsg" role="status"></p>
+        </div>
+      </li>
+
+      <li id="stepMode" class="step">
+        <div class="step-head">
+          <span class="num">4</span>
+          <div class="step-title"><h2>Choose your controls</h2><span class="step-sub">You can switch any time while Studio is open.</span></div>
+        </div>
+        <div class="step-body">
+          <div class="cards" role="radiogroup" aria-label="Controls">
+            <button type="button" class="card" data-mode="pc" role="radio" aria-checked="false">
+              <span class="card-name">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6" width="19" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M6 9.5h1.5M9.5 9.5H11M13 9.5h1.5M16.5 9.5H18M6 12.5h1.5M9.5 12.5H11M13 12.5h1.5M16.5 12.5H18M8 15.3h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                PC</span>
+              <span class="card-desc">Keyboard and mouse, just like Studio on your computer. WASD and Q/E fly the camera, right-drag turns it.</span>
+            </button>
+            <button type="button" class="card" data-mode="mobile" role="radio" aria-checked="false">
+              <span class="card-name">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="2.5" width="11" height="19" rx="2.2" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="18" r="1.1"/></svg>
+                Mobile</span>
+              <span class="card-desc">A thumbstick that appears where you touch moves the camera, dragging turns it, tapping clicks. Up and down buttons, and a keyboard for typing.</span>
+            </button>
+          </div>
+        </div>
+      </li>
+
+      <li id="stepPlay" class="step step-play">
+        <button id="playBtn" class="btn play" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z"/></svg>
+          Launch Studio
+        </button>
+        <p class="play-meta"><span id="playMeta"></span> · <button type="button" class="link" id="moreSettings">more settings</button></p>
+      </li>
+    </ol>
+
+    <p class="fineprint" id="fineprint">Sessions use your Google account's Colab compute units while Studio is open, and stop by themselves when you leave.
+      You sign in to Roblox inside Studio, as on any new computer.</p>
+  </main>
+
+  <!-- ========================================================= launching -->
+  <section id="launch" class="launch" hidden>
+    <div class="launch-card">
+      <div class="launch-head">
+        <h2>Starting Roblox Studio</h2>
+        <span class="timer" id="launchTimer">0:00</span>
+      </div>
+      <div id="launchBanner" class="banner" hidden></div>
+      <ol class="progress" id="progress"></ol>
+      <p class="launch-msg" id="launchMsg">Reserving a cloud machine…</p>
+      <div class="row">
+        <button class="btn stop" type="button" id="launchStop">Cancel</button>
+      </div>
+      <p class="fineprint">A new cloud machine is set up every time, which takes about 6 minutes.</p>
+    </div>
+  </section>
+
+  <!-- ============================================================= stage -->
+  <section id="stage" class="stage" hidden>
+    <div id="screen" class="screen" tabindex="0" aria-label="Roblox Studio">
+      <!-- the stream's <canvas> goes here (see player.js) -->
+    </div>
+
+    <!-- Mobile controls -->
+    <div id="touchUi" class="touch-ui" hidden>
+      <div id="stickZone" class="stick-zone">
+        <div id="stick" class="stick resting"><div id="stickKnob" class="stick-knob"></div></div>
+      </div>
+      <div class="touch-buttons">
+        <button type="button" class="tbtn" id="upBtn" aria-label="Camera up (E)">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6l7 9H5z"/></svg><span>E</span></button>
+        <button type="button" class="tbtn" id="downBtn" aria-label="Camera down (Q)">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 18l7-9H5z"/></svg><span>Q</span></button>
+      </div>
+      <div class="touch-top">
+        <div class="seg small" role="radiogroup" aria-label="Dragging">
+          <button type="button" data-touch="camera" role="radio" title="Dragging turns the camera">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-2h6l2 2h3v11H4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>Camera</button>
+          <button type="button" data-touch="cursor" role="radio" title="Dragging works like a mouse">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3l12 9-5.2 1.1L15.6 19l-2.4 1.1-2.8-6-4.4 3.5z" fill="currentColor"/></svg>Cursor</button>
+        </div>
+        <button type="button" class="tbtn flat" id="stickToggle" title="Show or hide the thumbstick">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="3.5"/></svg></button>
+        <button type="button" class="tbtn flat" id="rclickBtn" title="Next tap is a right-click">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="3" width="12" height="18" rx="6" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 3v7h6V9a6 6 0 0 0-6-6z"/></svg></button>
+      </div>
+    </div>
+
+    <div id="stageOverlay" class="stage-overlay">
+      <div class="overlay-card">
+        <div class="spinner" id="overlaySpinner"></div>
+        <p id="overlayText">Connecting to Studio…</p>
+        <button class="btn play" type="button" id="tapToStart" hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z"/></svg>
+          <span id="tapToStartText">Open Studio</span>
+        </button>
+      </div>
+    </div>
+    <div class="rotate-hint" id="rotateHint" aria-hidden="true">Turn your phone sideways for a bigger Studio</div>
+
+    <div id="hud" class="hud">
+      <button class="hud-btn stop" type="button" id="stopBtn" title="End the session">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg><span>End</span>
+      </button>
+      <button class="hud-btn" type="button" id="kbBtn" title="Keyboard" aria-label="Keyboard">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6" width="19" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M6 9.5h1.5M9.5 9.5H11M13 9.5h1.5M16.5 9.5H18M6 12.5h1.5M9.5 12.5H11M13 12.5h1.5M16.5 12.5H18M8 15.3h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+      <button class="hud-btn" type="button" id="fsBtn" title="Full screen" aria-label="Full screen">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <button class="hud-btn" type="button" id="moreBtn" title="More" aria-label="More" aria-expanded="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5.5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="18.5" cy="12" r="1.8"/></svg>
+      </button>
+      <span class="hud-stat" id="hudStat"></span>
+    </div>
+    <div id="moreMenu" class="more-menu" hidden>
+      <div class="menu-row"><span>Controls</span>
+        <div class="seg" role="radiogroup" aria-label="Controls">
+          <button type="button" data-mode="pc" role="radio">PC</button><button type="button" data-mode="mobile" role="radio">Mobile</button>
+        </div>
+      </div>
+      <div class="menu-row keys-row" id="keysRow">
+        <button class="btn small ghost" type="button" data-combo="ControlLeft+KeyZ">Undo</button>
+        <button class="btn small ghost" type="button" data-combo="ControlLeft+KeyY">Redo</button>
+        <button class="btn small ghost" type="button" data-combo="ControlLeft+KeyS">Save</button>
+        <button class="btn small ghost" type="button" data-combo="Delete">Delete</button>
+        <button class="btn small ghost" type="button" data-combo="F5">Play</button>
+        <button class="btn small ghost" type="button" data-combo="ShiftLeft+F5">Stop</button>
+      </div>
+      <div class="menu-row">
+        <button class="btn small ghost" type="button" id="pasteBtn">Paste text…</button>
+        <button class="btn small ghost" type="button" id="soundBtn">Sound on</button>
+        <button class="btn small ghost" type="button" id="restartBtn">Restart Studio</button>
+      </div>
+      <p class="menu-info" id="menuInfo"></p>
+    </div>
+    <input id="softKb" class="soft-kb" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="enter" aria-label="Type into Studio">
+  </section>
+
+  <!-- ========================================================== settings -->
+  <dialog id="settings" class="settings">
+    <form method="dialog" class="settings-inner">
+      <div class="settings-head"><h2>Settings</h2><button class="icon-btn" value="close" aria-label="Close">✕</button></div>
+
+      <section>
+        <h3>Picture</h3>
+        <div class="seg wide" role="radiogroup" aria-label="Resolution" id="resSeg">
+          <button type="button" data-res="720" role="radio">720p</button>
+          <button type="button" data-res="900" role="radio">900p</button>
+          <button type="button" data-res="1080" role="radio">1080p</button>
+        </div>
+        <div class="seg wide" role="radiogroup" aria-label="Frame rate" id="fpsSeg">
+          <button type="button" data-fps="60" role="radio">60 fps · smooth</button>
+          <button type="button" data-fps="30" role="radio">30 fps · data saver</button>
+        </div>
+        <label class="field inline"><span>Interface size</span>
+          <select id="dpiSelect">
+            <option value="96">100 %</option><option value="120">125 %</option><option value="144">150 %</option>
+          </select>
+        </label>
+        <p class="muted small">Picture changes apply the next time you launch Studio.</p>
+      </section>
+
+      <section>
+        <h3>Session</h3>
+        <label class="field inline"><span>End the session after</span>
+          <select id="limitSelect">
+            <option value="60">1 hour</option><option value="120">2 hours</option>
+            <option value="240">4 hours</option><option value="345">Almost 6 hours (the longest)</option>
+          </select>
+        </label>
+        <p class="muted small">A session also ends 10 minutes after you close this page.</p>
+      </section>
+
+      <section id="accessSection">
+        <h3>Access key</h3>
+        <p class="muted small" id="accessHelp">This copy of the site has no built-in access key. Paste the one the site's owner gave you.</p>
+        <label class="field"><span>Access key</span><input id="accessInput" type="password" placeholder="Not set" spellcheck="false" autocapitalize="off"></label>
+        <div class="row"><button type="button" class="btn small" id="saveAccess">Save</button><span class="msg" id="accessMsg" role="status"></span></div>
+      </section>
+
+      <section>
+        <h3>Google</h3>
+        <p id="settingsGoogle" class="muted">Not signed in.</p>
+        <div class="row"><button type="button" class="btn small ghost" id="signOut">Sign out</button></div>
+      </section>
+
+      <section>
+        <h3>This device</h3>
+        <p class="muted small">Your sign-in and settings are kept in this browser only.</p>
+        <div class="row"><button type="button" class="btn small danger" id="forget">Forget everything on this device</button></div>
+      </section>
+    </form>
+  </dialog>
+
+  <dialog id="pasteDialog" class="settings paste">
+    <form method="dialog" class="settings-inner">
+      <div class="settings-head"><h2>Paste into Studio</h2><button class="icon-btn" value="cancel" aria-label="Close">✕</button></div>
+      <textarea id="pasteText" rows="8" spellcheck="false" placeholder="Paste or type text here. It is typed into whatever has focus in Studio."></textarea>
+      <div class="row"><button class="btn primary" value="send" id="pasteSend">Paste</button></div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="config.js"></script>
+  <script src="vendor/nacl-fast.min.js"></script>
+  <script src="vendor/blake2b.js"></script>
+  <script src="vendor/jsmpeg.min.js"></script>
+  <script src="sealedbox.js"></script>
+  <script src="player.js"></script>
+  <script src="controls.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
