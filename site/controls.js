@@ -61,6 +61,7 @@
       this.letGo();
       this.mode = mode;
       this.touchUi.hidden = mode !== "mobile";
+      this.setStick(this.stickOn);
     }
 
     setTouchMode(m) {
@@ -70,14 +71,14 @@
 
     setStick(on) {
       this.stickOn = on;
-      this.stickZone.hidden = !on || this.popups.length > 0;
+      this.stickZone.hidden = !on || this.mode !== "mobile" || this.popups.length > 0;
     }
 
     setPopups(rects) {
       this.popups = Array.isArray(rects) ? rects : [];
       if (this.popups.length && this.stickState) this.endStick(null, true);
       this.setStick(this.stickOn);
-      // E/Q fly the camera: no use while a page is open, and they would cover it.
+      // E/Q fly the camera: no use while a page is open.
       document.querySelector(".touch-buttons").hidden = this.popups.length > 0;
     }
 

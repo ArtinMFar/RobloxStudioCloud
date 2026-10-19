@@ -17,7 +17,11 @@ case "$URL" in
     export WINEPREFIX=/content/wineprefix WINEDEBUG=-all
     VERSION=$(cat /content/RobloxStudio/version.txt)
     cd "$WINEPREFIX/drive_c/Program Files/Roblox/Versions/$VERSION"
-    nohup wine RobloxStudioBeta.exe "$URL" >> /content/logs/studio_url.log 2>&1 &
+    # Inside Studio's virtual desktop (vm/launch_studio.sh), like Studio itself:
+    # a window it opens outside it would sit on the bare screen, unframed and
+    # never maximised (vm/streamer.py only looks inside the desktop).
+    nohup wine explorer /desktop=Studio,"${WIDTH}x${HEIGHT}" \
+      "C:\\Program Files\\Roblox\\Versions\\$VERSION\\RobloxStudioBeta.exe" "$URL" >> /content/logs/studio_url.log 2>&1 &
     sleep 3
     pkill -f '[c]hrome.*rsc-chrome' || true
     ;;

@@ -54,6 +54,11 @@ TOKEN_PATH = pathlib.Path.home() / ".config/colab-cli/token.json"
 WORK = pathlib.Path(E.get("RUNNER_TEMP", "/tmp")) / "rsc"
 WORK.mkdir(parents=True, exist_ok=True)
 PORT = 8790
+# Studio's editor window will not get shorter than about 553 px at a 100 %
+# interface size (829 px at 150 %, measured on a T4 machine); on a shorter
+# screen it sticks out and its title bar and menus are cut off. So the interface
+# size is lowered, if need be, to the largest that leaves Studio this much room.
+STUDIO_MIN_HEIGHT = 560
 
 
 def log(*a):
@@ -443,6 +448,14 @@ def health(url):
         return None
 
 
+def fitting_dpi(want, height):
+    """The interface size (96, 120 or 144 dpi) to use: the one asked for, or the
+    largest smaller one that leaves Studio's window room on a screen this tall."""
+    want = want if want in (96, 120, 144) else 96
+    fits = [d for d in (96, 120, 144) if d <= want and height * 96 / d >= STUDIO_MIN_HEIGHT]
+    return max(fits or [96])
+
+
 def release(line, message):
     if STATE.exists():
         rc, out = colab("stop", "-s", NAME, timeout=300)
@@ -469,11 +482,12 @@ def start():
         STATE.unlink(missing_ok=True)
         line.fail(line.progress.get("error") or "No GPU was available", reply=False)
     w, h = int(OPTIONS.get("w", 1600)), int(OPTIONS.get("h", 900))
+    w, h = max(1024, min(2560, w)), max(576, min(1440, h))
     settings = {
-        "key_hash": KEY_HASH, "gpu": gpu, "width": max(1024, min(2560, w)), "height": max(576, min(1440, h)),
+        "key_hash": KEY_HASH, "gpu": gpu, "width": w, "height": h,
         "fps": 30 if int(OPTIONS.get("fps", 60)) <= 30 else 60,
         "bitrate": max(1500, min(20000, int(OPTIONS.get("bitrate", 8000)))),
-        "dpi": int(OPTIONS.get("dpi", 96)) if int(OPTIONS.get("dpi", 96)) in (96, 120, 144) else 96,
+        "dpi": fitting_dpi(int(OPTIONS.get("dpi", 96)), h),
     }
     line.set(phase="vm", message="Preparing the machine")
     ready = run_setup(line, settings)

@@ -66,9 +66,17 @@ their own Google account, and their sign-in stays in their own browser.
     to right-click, **pinch** to zoom, **two-finger slide** to scroll.
   - the ⌨ button opens the phone's keyboard.
 
+The page's own buttons sit in rails beside the picture (left and right with
+the phone sideways, top and bottom upright), never on it, and the picture stays
+inside the screen's safe area, so all of Studio is always in view, corners
+included. On phones the picture's shape is chosen to fill the room between the
+rails.
+
 The ⋯ menu has Undo/Redo/Save/Delete/Play/Stop, *Paste text…*, sound and
 *Restart Studio*. Settings has the picture size (720p/900p/1080p), 60 or 30
-fps, the interface size (100–150 %) and the session length.
+fps, the interface size (100–150 %) and the session length. Studio's window
+needs about 553 px of height at 100 % (829 px at 150 %), so at 720p the
+interface is at most 125 %; at 150 % its top would be cut off.
 
 ## How it works
 
