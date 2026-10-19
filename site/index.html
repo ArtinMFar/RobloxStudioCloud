@@ -139,32 +139,53 @@
 
   <!-- ============================================================= stage -->
   <section id="stage" class="stage" hidden>
-    <div id="screen" class="screen" tabindex="0" aria-label="Roblox Studio">
-      <!-- the stream's <canvas> goes here (see player.js) -->
+    <!-- The page's own buttons sit in rails beside the picture, never on it, so
+         all of Studio stays in view (its top bar, panels and corners). -->
+    <div id="hud" class="rail hud">
+      <button class="hud-btn stop" type="button" id="stopBtn" title="End the session" aria-label="End the session">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+      </button>
+      <button class="hud-btn" type="button" id="kbBtn" title="Keyboard" aria-label="Keyboard">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6" width="19" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M6 9.5h1.5M9.5 9.5H11M13 9.5h1.5M16.5 9.5H18M6 12.5h1.5M9.5 12.5H11M13 12.5h1.5M16.5 12.5H18M8 15.3h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+      <button class="hud-btn" type="button" id="fsBtn" title="Full screen" aria-label="Full screen">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <button class="hud-btn" type="button" id="moreBtn" title="More" aria-label="More" aria-expanded="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5.5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="18.5" cy="12" r="1.8"/></svg>
+      </button>
+      <span class="rail-gap"></span>
+      <span class="hud-stat" id="hudStat"></span>
+    </div>
+
+    <div id="view" class="view">
+      <div id="screen" class="screen" tabindex="0" aria-label="Roblox Studio">
+        <!-- the stream's <canvas> goes here (see player.js) -->
+      </div>
+      <div id="stickZone" class="stick-zone" hidden>
+        <div id="stick" class="stick resting"><div id="stickKnob" class="stick-knob"></div></div>
+      </div>
+      <div class="rotate-hint" id="rotateHint" aria-hidden="true">Turn your phone sideways for a bigger Studio</div>
     </div>
 
     <!-- Mobile controls -->
-    <div id="touchUi" class="touch-ui" hidden>
-      <div id="stickZone" class="stick-zone">
-        <div id="stick" class="stick resting"><div id="stickKnob" class="stick-knob"></div></div>
+    <div id="touchUi" class="rail touch-ui" hidden>
+      <div class="seg rail-seg" role="radiogroup" aria-label="Dragging">
+        <button type="button" data-touch="camera" role="radio" title="Dragging turns the camera" aria-label="Camera">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-2h6l2 2h3v11H4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></button>
+        <button type="button" data-touch="cursor" role="radio" title="Dragging works like a mouse" aria-label="Cursor">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3l12 9-5.2 1.1L15.6 19l-2.4 1.1-2.8-6-4.4 3.5z" fill="currentColor"/></svg></button>
       </div>
+      <button type="button" class="tbtn flat" id="stickToggle" title="Show or hide the thumbstick" aria-label="Thumbstick">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="3.5"/></svg></button>
+      <button type="button" class="tbtn flat" id="rclickBtn" title="Next tap is a right-click" aria-label="Right-click">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="3" width="12" height="18" rx="6" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 3v7h6V9a6 6 0 0 0-6-6z"/></svg></button>
+      <span class="rail-gap"></span>
       <div class="touch-buttons">
         <button type="button" class="tbtn" id="upBtn" aria-label="Camera up (E)">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 6l7 9H5z"/></svg><span>E</span></button>
         <button type="button" class="tbtn" id="downBtn" aria-label="Camera down (Q)">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 18l7-9H5z"/></svg><span>Q</span></button>
-      </div>
-      <div class="touch-top">
-        <div class="seg small" role="radiogroup" aria-label="Dragging">
-          <button type="button" data-touch="camera" role="radio" title="Dragging turns the camera">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-2h6l2 2h3v11H4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>Camera</button>
-          <button type="button" data-touch="cursor" role="radio" title="Dragging works like a mouse">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3l12 9-5.2 1.1L15.6 19l-2.4 1.1-2.8-6-4.4 3.5z" fill="currentColor"/></svg>Cursor</button>
-        </div>
-        <button type="button" class="tbtn flat" id="stickToggle" title="Show or hide the thumbstick">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="3.5"/></svg></button>
-        <button type="button" class="tbtn flat" id="rclickBtn" title="Next tap is a right-click">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="3" width="12" height="18" rx="6" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M12 3v7h6V9a6 6 0 0 0-6-6z"/></svg></button>
       </div>
     </div>
 
@@ -177,23 +198,6 @@
           <span id="tapToStartText">Open Studio</span>
         </button>
       </div>
-    </div>
-    <div class="rotate-hint" id="rotateHint" aria-hidden="true">Turn your phone sideways for a bigger Studio</div>
-
-    <div id="hud" class="hud">
-      <button class="hud-btn stop" type="button" id="stopBtn" title="End the session">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2"/></svg><span>End</span>
-      </button>
-      <button class="hud-btn" type="button" id="kbBtn" title="Keyboard" aria-label="Keyboard">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6" width="19" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M6 9.5h1.5M9.5 9.5H11M13 9.5h1.5M16.5 9.5H18M6 12.5h1.5M9.5 12.5H11M13 12.5h1.5M16.5 12.5H18M8 15.3h8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-      </button>
-      <button class="hud-btn" type="button" id="fsBtn" title="Full screen" aria-label="Full screen">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-      </button>
-      <button class="hud-btn" type="button" id="moreBtn" title="More" aria-label="More" aria-expanded="false">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5.5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="18.5" cy="12" r="1.8"/></svg>
-      </button>
-      <span class="hud-stat" id="hudStat"></span>
     </div>
     <div id="moreMenu" class="more-menu" hidden>
       <div class="menu-row"><span>Controls</span>
@@ -240,7 +244,8 @@
             <option value="96">100 %</option><option value="120">125 %</option><option value="144">150 %</option>
           </select>
         </label>
-        <p class="muted small">Picture changes apply the next time you launch Studio.</p>
+        <p class="muted small">Picture changes apply the next time you launch Studio. At 720p the interface is at
+          most 125 %, so that all of Studio fits on the screen.</p>
       </section>
 
       <section>

@@ -11,6 +11,7 @@
   --warn: #e0a42b;
   --bad: #e5534b;
   --radius: 14px;
+  --safe-t: env(safe-area-inset-top, 0px);
   --safe-l: env(safe-area-inset-left, 0px);
   --safe-r: env(safe-area-inset-right, 0px);
   --safe-b: env(safe-area-inset-bottom, 0px);
@@ -139,7 +140,17 @@ code { background: #ffffff14; padding: 1px 5px; border-radius: 5px; }
 .launch-msg { min-height: 1.5em; color: #c5ced9; }
 
 /* ---------------------------------------------------------------- stage */
-.stage { position: fixed; inset: 0; background: #000; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+/* The picture sits between two rails that hold the page's own buttons, inside
+   the screen's safe area (clear of notches, rounded corners and the home bar),
+   so nothing is ever drawn over Studio. Landscape: rails left and right;
+   portrait: top and bottom. app.js (RAIL) uses the same rail width. */
+.stage {
+  --rail: 52px;
+  position: fixed; inset: 0; background: #000; overflow: hidden; display: flex;
+  padding: var(--safe-t) var(--safe-r) var(--safe-b) var(--safe-l);
+  touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+}
+.view { position: relative; flex: 1; min-width: 0; min-height: 0; }
 .screen { position: absolute; inset: 0; display: grid; place-items: center; outline: none; touch-action: none; }
 .screen canvas.video { display: block; width: auto; height: auto; max-width: 100%; max-height: 100%; image-rendering: auto; touch-action: none; }
 .stage-overlay { position: absolute; inset: 0; display: grid; place-items: center; background: #000a; z-index: 5; }
@@ -149,17 +160,20 @@ code { background: #ffffff14; padding: 1px 5px; border-radius: 5px; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .rotate-hint { display: none; }
 @media (orientation: portrait) and (pointer: coarse) {
-  .rotate-hint { display: block; position: absolute; left: 50%; bottom: calc(18px + var(--safe-b)); transform: translateX(-50%); background: #000c; padding: 8px 14px; border-radius: 99px; font-size: 13px; color: #dbe3ec; z-index: 4; pointer-events: none; white-space: nowrap; }
+  .rotate-hint { display: block; position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); background: #000c; padding: 8px 14px; border-radius: 99px; font-size: 13px; color: #dbe3ec; z-index: 4; pointer-events: none; white-space: nowrap; }
 }
 
-.hud { position: absolute; top: 8px; left: max(8px, var(--safe-l)); display: flex; gap: 6px; align-items: center; z-index: 6; transition: opacity .4s; }
-.hud.faded { opacity: .28; }
-.hud.faded:hover { opacity: 1; }
-.hud-btn { background: #000b; border: 1px solid #ffffff22; color: #fff; height: 36px; min-width: 36px; padding: 0 9px; border-radius: 10px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 13px; }
-.hud-btn svg { width: 18px; height: 18px; fill: currentColor; }
+.rail {
+  flex: none; width: var(--rail); z-index: 6; background: var(--bg); padding: 8px 0; overflow: hidden;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+}
+.rail-gap { flex: 1; min-width: 0; min-height: 0; }
+.hud-btn { flex: none; background: #ffffff0d; border: 1px solid #ffffff22; color: #fff; width: 40px; height: 40px; padding: 0; border-radius: 10px; display: inline-grid; place-items: center; cursor: pointer; font-size: 13px; -webkit-tap-highlight-color: transparent; }
+.hud-btn:hover { background: #ffffff1a; }
+.hud-btn svg { width: 19px; height: 19px; fill: currentColor; }
 .hud-btn.stop { color: #ffb3ae; }
-.hud-stat { color: #cfd8e3; font-size: 12px; background: #000a; padding: 3px 8px; border-radius: 8px; font-variant-numeric: tabular-nums; }
-.more-menu { position: absolute; top: 52px; left: max(8px, var(--safe-l)); z-index: 7; background: #10151dee; border: 1px solid var(--line); border-radius: 14px; padding: 12px; width: min(380px, calc(100vw - 16px)); display: grid; gap: 10px; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+.hud-stat { color: #aab6c5; font-size: 10.5px; line-height: 1.3; text-align: center; white-space: pre-line; font-variant-numeric: tabular-nums; }
+.more-menu { position: absolute; top: calc(var(--safe-t) + 8px); left: calc(var(--safe-l) + var(--rail) + 8px); z-index: 7; background: #10151dee; border: 1px solid var(--line); border-radius: 14px; padding: 12px; width: min(380px, calc(100vw - var(--safe-l) - var(--rail) - 16px)); max-height: calc(100% - var(--safe-t) - var(--safe-b) - 16px); overflow-y: auto; display: grid; gap: 10px; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
 .menu-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: space-between; }
 .keys-row { justify-content: flex-start; }
 .menu-info { margin: 0; color: var(--muted); font-size: 12.5px; }
@@ -172,21 +186,46 @@ code { background: #ffffff14; padding: 1px 5px; border-radius: 5px; }
 .seg.small button { padding: 5px 10px; font-size: 13px; }
 .soft-kb { position: absolute; left: -9999px; top: 0; width: 10px; height: 10px; opacity: 0; font-size: 16px; }
 
+@media (orientation: portrait) {
+  .stage { flex-direction: column; }
+  .rail { width: auto; height: var(--rail); flex-direction: row; padding: 0 8px; }
+  .more-menu { top: calc(var(--safe-t) + var(--rail) + 8px); left: calc(var(--safe-l) + 8px); width: min(380px, calc(100vw - var(--safe-l) - var(--safe-r) - 16px)); max-height: calc(100% - var(--safe-t) - var(--safe-b) - var(--rail) * 2 - 16px); }
+}
+
 /* ------------------------------------------------------- mobile controls */
-.touch-ui { position: absolute; inset: 0; pointer-events: none; z-index: 3; }
-.stick-zone { position: absolute; left: 0; bottom: 0; width: 38%; height: 58%; pointer-events: auto; touch-action: none; }
+.rail-seg { flex: none; flex-direction: column; padding: 2px; gap: 2px; }
+.rail-seg button { width: 36px; height: 36px; padding: 0; justify-content: center; -webkit-tap-highlight-color: transparent; }
+.rail-seg button svg { width: 19px; height: 19px; }
+@media (orientation: portrait) { .rail-seg { flex-direction: row; } }
+.stick-zone { position: absolute; left: 0; bottom: 0; width: 38%; height: 58%; z-index: 3; touch-action: none; }
 .stick { position: absolute; width: 132px; height: 132px; transform: translate(-50%, -50%); border-radius: 50%; border: 2px solid #ffffff55; background: radial-gradient(circle, #ffffff10, #ffffff06); pointer-events: none; }
-.stick.resting { left: calc(96px + var(--safe-l)) !important; top: auto !important; bottom: calc(30px + var(--safe-b)); transform: translate(-50%, 0); opacity: .35; }
+.stick.resting { left: 84px !important; top: auto !important; bottom: 20px; transform: translate(-50%, 0); opacity: .35; }
+.stick.resting .stick-knob { display: none; } /* at rest only a faint ring, so it hides nothing */
 .stick-knob { position: absolute; left: 50%; top: 50%; width: 56px; height: 56px; transform: translate(-50%, -50%); border-radius: 50%; background: #ffffffaa; box-shadow: 0 2px 10px #0006; }
-.touch-buttons { position: absolute; right: calc(18px + var(--safe-r)); bottom: calc(24px + var(--safe-b)); display: grid; gap: 14px; pointer-events: auto; }
-.tbtn { width: 64px; height: 64px; border-radius: 50%; border: 2px solid #ffffff55; background: #0007; color: #fff; display: grid; place-items: center; touch-action: none; -webkit-tap-highlight-color: transparent; position: relative; }
-.tbtn svg { width: 26px; height: 26px; fill: currentColor; }
-.tbtn span { position: absolute; bottom: 6px; font-size: 10px; opacity: .7; }
+.touch-buttons { flex: none; display: flex; flex-direction: column; gap: 10px; }
+@media (orientation: portrait) { .touch-buttons { flex-direction: row; } }
+.tbtn { flex: none; width: 46px; height: 46px; border-radius: 50%; border: 2px solid #ffffff55; background: #ffffff0d; color: #fff; display: grid; place-items: center; touch-action: none; -webkit-tap-highlight-color: transparent; position: relative; padding: 0; }
+.tbtn svg { width: 20px; height: 20px; fill: currentColor; }
+.tbtn span { position: absolute; bottom: 2px; font-size: 9px; opacity: .7; }
 .tbtn.held, .tbtn.on { background: var(--accent); border-color: var(--accent); }
 .tbtn.flat { width: 40px; height: 40px; border-radius: 10px; border-width: 1px; }
 .tbtn.flat svg { width: 20px; height: 20px; }
-.touch-top { position: absolute; top: 8px; right: calc(8px + var(--safe-r)); display: flex; gap: 6px; align-items: center; pointer-events: auto; }
-.touch-top .seg { background: #000b; }
+/* Short screens (small phones in landscape): smaller buttons, so every one fits. */
+@media (orientation: landscape) and (max-height: 380px) {
+  .rail { gap: 5px; padding: 6px 0; }
+  .hud-btn, .tbtn.flat { width: 36px; height: 36px; }
+  .rail-seg button { width: 32px; height: 32px; }
+  .tbtn { width: 40px; height: 40px; }
+  .touch-buttons { gap: 6px; }
+  .hud-stat { font-size: 9.5px; }
+}
+@media (orientation: landscape) and (max-height: 320px) {
+  .hud-btn, .tbtn.flat { width: 32px; height: 32px; }
+  .rail-seg button { width: 28px; height: 28px; }
+  .tbtn { width: 34px; height: 34px; }
+  .tbtn span { display: none; }
+  .hud-stat { display: none; }
+}
 
 /* ------------------------------------------------------------- dialogs */
 dialog.settings { border: 1px solid var(--line); background: var(--bg2); color: var(--text); border-radius: 18px; padding: 0; width: min(520px, calc(100vw - 20px)); max-height: calc(100vh - 30px); }

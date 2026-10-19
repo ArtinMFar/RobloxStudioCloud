@@ -38,6 +38,7 @@
     ["stream", "Connecting", ["stream", "ready"]],
   ];
   const RES = { 720: [1280, 720], 900: [1600, 900], 1080: [1920, 1080] };
+  const RAIL = 52; // CSS px: one rail of buttons beside the picture (--rail in app.css)
 
   const $ = (s) => document.querySelector(s);
   const $$ = (s) => Array.from(document.querySelectorAll(s));
@@ -419,17 +420,35 @@
     renderHome();
     if (controls) controls.setMode(mode);
     $("#kbBtn").hidden = !(hasTouch || mode === "mobile");
+    fit(); // the mobile controls' rail came or went
     if (changed && !quiet && !$("#stage").hidden)
       toast(mode === "mobile" ? "Mobile controls: thumbstick, drag to turn, tap to click." : "PC controls: keyboard and mouse.");
   }
   $$("[data-mode]").forEach((b) => b.addEventListener("click", () => setMode(b.dataset.mode)));
 
+  // The screen's safe area insets (notch, rounded corners, home bar) in CSS px: [top, right, bottom, left].
+  function safeInsets() {
+    const probe = document.createElement("div");
+    probe.style.cssText = "position:fixed;visibility:hidden;padding:env(safe-area-inset-top,0px) " +
+      "env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)";
+    document.body.appendChild(probe);
+    const cs = getComputedStyle(probe);
+    const insets = [cs.paddingTop, cs.paddingRight, cs.paddingBottom, cs.paddingLeft].map((v) => parseFloat(v) || 0);
+    probe.remove();
+    return insets;
+  }
+
   function streamSize() {
     const [w0, h] = RES[settings.res] || RES[900];
     let w = w0;
     if (settings.mode === "mobile" && isTouchFirst) {
-      const long = Math.max(screen.width, screen.height);
-      const short = Math.min(screen.width, screen.height) || 1;
+      // The shape of the room the picture gets with the phone sideways: the
+      // screen less the two rails and the safe area. (Held upright, the insets
+      // at the top and bottom are the ones that end up at the sides.)
+      const [t, r, b, l] = safeInsets();
+      const upright = matchMedia("(orientation: portrait)").matches;
+      const long = Math.max(screen.width, screen.height) - 2 * RAIL - (upright ? t + b : l + r);
+      const short = Math.min(screen.width, screen.height) - (upright ? l + r : t + b) || 1;
       w = Math.round((h * Math.min(2.4, Math.max(1.33, long / short))) / 8) * 8;
     }
     return [w, h];
@@ -707,7 +726,6 @@
     pingTimer = setInterval(() => send({ t: "ping", ts: performance.now() }), 2000);
     clearInterval(statTimer);
     statTimer = setInterval(updateStat, 1000);
-    fadeHudSoon();
     setTimeout(() => {
       if (!firstFrame && session) overlay("Still connecting… (if this takes long, your network may block the stream)", true);
     }, 15000);
@@ -787,13 +805,14 @@
   });
   document.addEventListener("fullscreenchange", () => setTimeout(fit, 100));
 
+  // The whole picture, as large as it fits between the rails (see app.css).
   function fit() {
     const c = player && player.canvas;
     if (!c) return;
     const w = c.width || session.w;
     const h = c.height || session.h;
-    const sw = innerWidth;
-    const sh = innerHeight;
+    const sw = screenEl.clientWidth || innerWidth;
+    const sh = screenEl.clientHeight || innerHeight;
     const s = Math.min(sw / w, sh / h);
     c.style.width = `${Math.floor(w * s)}px`;
     c.style.height = `${Math.floor(h * s)}px`;
@@ -862,7 +881,7 @@
     if (session && session.gpu) parts.push(session.gpu);
     if (player.frames) parts.push(`${player.fps} fps`);
     if (lastRtt !== null) parts.push(`${lastRtt} ms`);
-    $("#hudStat").textContent = parts.join(" · ");
+    $("#hudStat").textContent = parts.join("\n");
     $("#menuInfo").textContent =
       `Picture ${controls.dims.w}×${controls.dims.h}, ${player.codec === "h264" ? "H.264 (hardware decoding)" : "MPEG-1 (compatibility mode)"}, ` +
       `${(player.kbps / 1000).toFixed(1)} Mbit/s` +
@@ -872,27 +891,14 @@
     else if (firstFrame && !stale && $("#overlayText").textContent === "Reconnecting…") overlay(null);
   }
 
-  // HUD fades after a while; touching the top of the screen brings it back.
-  let hudTimer;
-  function fadeHudSoon() {
-    clearTimeout(hudTimer);
-    $("#hud").classList.remove("faded");
-    hudTimer = setTimeout(() => {
-      if ($("#moreMenu").hidden) $("#hud").classList.add("faded");
-    }, 4000);
-  }
-  $("#hud").addEventListener("pointerdown", fadeHudSoon);
-
   function closeMenu() {
     $("#moreMenu").hidden = true;
     $("#moreBtn").setAttribute("aria-expanded", "false");
-    fadeHudSoon();
   }
   $("#moreBtn").addEventListener("click", () => {
     const open = $("#moreMenu").hidden;
     $("#moreMenu").hidden = !open;
     $("#moreBtn").setAttribute("aria-expanded", String(open));
-    fadeHudSoon();
     updateStat();
     $("#soundBtn").textContent = soundOn ? "Sound off" : "Sound on";
   });
